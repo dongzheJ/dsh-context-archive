@@ -1,0 +1,17 @@
+# dsh-context-archive — bundle patch layer.
+#
+# Profile-bundle patches compose over an EMPTY entry list (launcher
+# composition), so this row appends the plugin host-wide. Every key below is
+# the effective default; edit this row (or copy it into your own composition)
+# to change the strategy.
+- insert:
+    - id: context-archive
+      name: 'dsh-context-archive'
+      config:
+        dir: 'docs/context-archive'   # 归档目录（工作区内）
+        agentsFile: 'AGENTS.md'       # 只写一次的指针落点
+        autoPark: true                # 关掉后只能用 /park 手动触发
+        parkAfterCompactions: 3       # 累计多少次压缩后自动 park（可在「插件」页配置）
+        retainTailNodes: 2            # 始终保留最新的 N 个表面节点不归档
+        indexMaxEntries: 150          # index.md 条目上限，超出轮换到 index-archive.md
+        maxToolChars: 2000            # 归档原文里单个工具输出的字符上限
