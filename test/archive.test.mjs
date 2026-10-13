@@ -13,6 +13,7 @@ import {
   lastParkSeq,
   nextParkNumber,
   parseMeta,
+  parseParkInput,
   renderIndexEntry,
   renderPointerMessage,
   renderSegment,
@@ -286,4 +287,15 @@ test('window start extends back to the enclosing turn boundary', () => {
   assert.equal(extendToTurnBoundary(events, 10), 9)
   assert.equal(extendToTurnBoundary(events, 5), 1)
   assert.equal(extendToTurnBoundary(events, 0), 0)
+})
+
+test('park input grammar: bare parks, switch optionally names a preset', () => {
+  assert.deepEqual(parseParkInput(''), { action: 'park' })
+  assert.deepEqual(parseParkInput('   '), { action: 'park' })
+  assert.deepEqual(parseParkInput(' switch '), { action: 'switch', preset: undefined })
+  assert.deepEqual(parseParkInput('switch ptc'), { action: 'switch', preset: 'ptc' })
+  assert.deepEqual(parseParkInput('  switch   minimal  '), { action: 'switch', preset: 'minimal' })
+  assert.equal(parseParkInput('switch a b').action, 'error')
+  assert.equal(parseParkInput('now').action, 'error')
+  assert.equal(parseParkInput('SWITCH').action, 'error')
 })

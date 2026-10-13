@@ -1,6 +1,6 @@
 {
   "name": "dsh-context-archive",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Archive compacted DSH session context into the workspace and replace the surface with the summary, keeping a one-line pointer in AGENTS.md",
   "type": "module",
   "main": "lib/index.js",
@@ -46,9 +46,12 @@
     "client": {
       "platform": "web",
       "inject": [
+        "@deepseek-ai/dsh-api-remotes",
+        "@deepseek-ai/dsh-api-session-controller",
         "@deepseek-ai/dsh-client-connection",
         "@deepseek-ai/dsh-client-ui-settings",
-        "@deepseek-ai/dsh-client-ui-sidebar"
+        "@deepseek-ai/dsh-client-ui-sidebar",
+        "@deepseek-ai/dsh-client-ui-workspace"
       ]
     }
   },

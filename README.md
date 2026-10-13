@@ -5,6 +5,7 @@
 - **不是**轮换新会话：同一 session、同一 agent，原地替换表面（surface），没有 UI 跳转。
 - **不是**每次压缩都改 `AGENTS.md`：指针只写一次，之后永不重写（手工编辑也保留）。
 - 触发策略可配：自动压缩 `parkAfterCompactions` 次后 park，默认 **3**；也可随时 `/park` 手动触发。
+- **`/park switch [预设id]`**：先 park 当前会话，再由宿主开一条同一工作区/目录的新会话并切过去（可选 agent preset），适合"归档旧账、从头开始"。
 
 ## 工作方式
 
@@ -47,6 +48,30 @@ docs/context-archive/
 <!-- dsh-context-archive:pointer -->
 早期对话会归档到 `docs/context-archive/`：需要回忆先前工作、或不确定上下文是否完整时，先读 `docs/context-archive/index.md` 定位，再按需 grep/read `docs/context-archive/segments/` 下对应文件。
 <!-- /dsh-context-archive:pointer -->
+```
+
+## 切换会话：`/park switch [预设id]`
+
+`/park` 只归档；加上 `switch` 就在归档之后另起一条新会话：
+
+```
+/park                 # 仅归档（不变）
+/park switch          # 归档 + 开新会话（宿主默认 agent preset）
+/park switch ptc      # 归档 + 开新会话并指定 agent preset
+```
+
+要点：
+
+- **新会话由宿主创建，不是浏览器**。这样 GUI 和聊天室驱动（`dsh-lobby-bot`）会指向**同一条**新会话：浏览器半区只是 `openSession` 切过去，驱动则把房间的 `(bot, room)→会话` 记账重绑到新会话（见下）。
+- 新会话与当前会话**同一工作区/目录**（继承 `cwd`，能解析到就带 `workspaceId`）；`agentPreset` 缺省用宿主默认。
+- **归档失败也会切换**：`nothing-to-park` / `busy` / `compaction-active` 只作为提示，新会话照常开——目的是"换个干净上下文"，不该被一次归档失败卡住。
+- 宿主开完新会话后 emit 一个宿主事件 **`context-archive/switch`**，体为 `{ fromSessionId, toSessionId, preset }`：
+  - 浏览器半区据此把界面切到 `toSessionId`；
+  - `dsh-lobby-bot` 若正在驱动 `fromSessionId`，把该房间的记账指向 `toSessionId`，下一轮房间消息就用新会话。没有别的插件监听时该事件被忽略，两个插件可各自独立升级。
+- 需要浏览器半区能拿到 `sessions` / `remote` / `uiWorkspace`（见 `package.json` 的 `dsh.client.inject`）；旧部署缺这些服务时只是不切换，归档功能不受影响。
+
+```text
+config/cordis.patch.yml   无需改；`/park` 命令的 input 描述符在代码里
 ```
 
 ## 配置
@@ -119,6 +144,7 @@ dsh --profile <profile> --dump-config | grep -A 10 context-archive
 3. 把 `parkAfterCompactions` 设为 `1`，正常聊到触发一次真实压缩 → 下一轮开工时应自动 park。
 4. 让模型"回忆第 N 轮说过什么" → 它应当先读 `index.md` 再 grep `segments/`。
 5. 卸载插件后重开被 park 过的会话 → 日志仍能正常重建（本插件不自造事件类型，只追加一条官方 `user/message` 替换）。
+6. `/park switch`（可选带 preset）→ 界面切到新会话、标题栏是新会话；若同一会话由 `dsh-lobby-bot` 驱动，房间里再 `@` 它时用的是新会话（旧会话不再被接上）。park 失败时仍切，但提示里带归档失败原因。
 
 ## 测试
 
